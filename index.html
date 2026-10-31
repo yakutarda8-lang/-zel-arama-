@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Özel P2P Sesli, Görüntülü & Yazılı Görüşme</title>
+    <title>P2P Özel Görüşme & Arkadaş Rehberi</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PeerJS CDN -->
@@ -13,23 +13,11 @@
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            touch-action: manipulation;
-        }
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #111827;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 4px;
-        }
-        .mirror-video {
-            transform: scaleX(-1);
-        }
+        body { font-family: 'Inter', sans-serif; touch-action: manipulation; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        .mirror-video { transform: scaleX(-1); }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
@@ -49,16 +37,15 @@
                 </div>
             </div>
 
-            <!-- User Peer ID Box -->
-            <div class="flex items-center bg-gray-800/80 border border-gray-700/60 rounded-xl p-1 pl-2.5">
-                <div class="text-xs mr-2">
-                    <span class="text-gray-400 block text-[9px] uppercase font-semibold">Senin ID'n:</span>
-                    <span id="my-peer-id" class="font-mono text-indigo-300 font-bold text-xs select-all">Yükleniyor...</span>
+            <!-- Kullanıcı Adı Giriş / Gösterim Alanı -->
+            <div class="flex items-center bg-gray-800/80 border border-gray-700/60 rounded-xl p-1 px-2.5">
+                <div class="text-xs">
+                    <span class="text-gray-400 block text-[9px] uppercase font-semibold">Kullanıcı Adın:</span>
+                    <div id="username-display-wrap" class="flex items-center gap-1.5">
+                        <span id="my-username" class="font-mono text-indigo-300 font-bold text-xs select-all">Belirlenmedi</span>
+                        <button onclick="changeUsername()" class="text-[10px] text-gray-400 hover:text-white" title="Adını Değiştir"><i class="fa-solid fa-pen"></i></button>
+                    </div>
                 </div>
-                <button id="copy-id-btn" onclick="copyMyId()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1 active:scale-95">
-                    <i class="fa-regular fa-copy"></i>
-                    <span id="copy-text">Kopyala</span>
-                </button>
             </div>
         </div>
     </header>
@@ -66,32 +53,27 @@
     <!-- Main Container -->
     <main class="max-w-7xl w-full mx-auto p-3 md:p-6 flex-1 flex flex-col lg:flex-row gap-4">
 
-        <!-- Left Column: Video & Call Controls -->
+        <!-- Sol Taraf: Rehber & Arama Ekranı -->
         <div class="flex-1 flex flex-col gap-3">
             
-            <!-- Connection Control Panel -->
-            <div id="connection-setup" class="bg-gray-900 border border-gray-800 rounded-2xl p-3.5 shadow-xl">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                    <i class="fa-solid fa-plug text-indigo-400"></i> Arkadaşına Bağlan
-                </h2>
-                <div class="flex flex-col sm:flex-row gap-2">
-                    <div class="relative flex-1">
-                        <i class="fa-solid fa-user-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
-                        <input type="text" id="remote-peer-id" placeholder="Arkadaşının ID'sini yapıştır..." 
-                               class="w-full bg-gray-950 border border-gray-700 focus:border-indigo-500 rounded-xl py-2 pl-9 pr-3 text-xs text-gray-100 placeholder-gray-500 transition outline-none">
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="startCall(false)" class="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/20 active:scale-95">
-                            <i class="fa-solid fa-phone"></i> Sesli
-                        </button>
-                        <button onclick="startCall(true)" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 active:scale-95">
-                            <i class="fa-solid fa-video"></i> Görüntülü
-                        </button>
-                    </div>
+            <!-- Arkadaşlar & Hızlı Arama Paneli -->
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3.5 shadow-xl">
+                <div class="flex items-center justify-between mb-2.5">
+                    <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-group text-indigo-400"></i> Arkadaş Rehberi
+                    </h2>
+                    <button onclick="promptAddFriend()" class="text-[11px] bg-indigo-600/80 hover:bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-medium transition flex items-center gap-1">
+                        <i class="fa-solid fa-user-plus text-[10px]"></i> Ekle
+                    </button>
+                </div>
+
+                <!-- Arkadaş Listesi -->
+                <div id="friends-list" class="flex flex-wrap gap-2 min-h-[42px] items-center">
+                    <!-- Dinamik Liste Dolacak -->
                 </div>
             </div>
 
-            <!-- Status Banner -->
+            <!-- Durum Çubuğu -->
             <div id="status-banner" class="hidden bg-gray-800/90 border border-indigo-500/30 rounded-xl p-2.5 text-xs flex items-center justify-between">
                 <div class="flex items-center gap-2 text-indigo-300">
                     <i id="status-icon" class="fa-solid fa-spinner animate-spin"></i>
@@ -100,22 +82,22 @@
                 <button onclick="endCall()" class="text-[11px] bg-red-500/20 text-red-400 hover:bg-red-500/30 px-2 py-0.5 rounded-lg transition font-semibold">İptal</button>
             </div>
 
-            <!-- Video Call Screen Grid -->
+            <!-- Video Arama Izgarası -->
             <div class="relative flex-1 min-h-[280px] sm:min-h-[360px] bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
                 
-                <!-- Placeholder Screen -->
+                <!-- Başlangıç Ekranı -->
                 <div id="video-placeholder" class="text-center p-4 max-w-xs">
                     <div class="w-16 h-16 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center mx-auto mb-3 text-gray-500 text-2xl shadow-inner">
                         <i class="fa-solid fa-user-shield"></i>
                     </div>
-                    <h3 class="text-base font-bold text-gray-200 mb-1">Henüz Bir Arama Yok</h3>
-                    <p class="text-[11px] text-gray-400">ID'ni arkadaşına ilet veya arkadaşının ID'sini yukarıya girerek aramayı başlat.</p>
+                    <h3 class="text-base font-bold text-gray-200 mb-1">Arama Yapmaya Hazır</h3>
+                    <p class="text-[11px] text-gray-400">Yukarıdan arkadaş ekle ve aramak için üzerine tıkla!</p>
                 </div>
 
-                <!-- Remote Main Video -->
+                <!-- Karşı Taraf Videosu -->
                 <video id="remote-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
 
-                <!-- Audio Only Avatar Placeholder -->
+                <!-- Sadece Sesli Arama Avatarı -->
                 <div id="remote-avatar" class="hidden absolute inset-0 bg-gray-900 flex flex-col items-center justify-center gap-2">
                     <div class="w-24 h-24 rounded-full bg-indigo-900/40 border-2 border-indigo-500/50 flex items-center justify-center text-indigo-300 text-3xl shadow-xl animate-pulse">
                         <i class="fa-solid fa-user"></i>
@@ -123,7 +105,7 @@
                     <span class="text-xs text-gray-400 font-medium">Sesli Görüşme Devam Ediyor...</span>
                 </div>
 
-                <!-- Local Small Video (PIP) -->
+                <!-- Kendi Küçük Videon (PIP) -->
                 <div id="local-video-container" class="absolute bottom-3 right-3 w-28 sm:w-40 aspect-video bg-gray-950 border-2 border-gray-700 rounded-xl overflow-hidden shadow-xl transition-all hidden">
                     <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirror-video"></video>
                     <div id="local-video-off-avatar" class="hidden w-full h-full bg-gray-800 flex items-center justify-center text-gray-400 text-lg">
@@ -132,12 +114,12 @@
                     <span class="absolute bottom-1 left-1.5 text-[9px] bg-black/60 px-1 py-0.5 rounded text-gray-300 font-medium backdrop-blur">Sen</span>
                 </div>
 
-                <!-- Call Action Controls Bar -->
+                <!-- Arama Kontrol Butonları -->
                 <div id="call-controls" class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-gray-950/80 backdrop-blur-md border border-gray-800 rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl hidden z-20">
-                    <button id="btn-toggle-mic" onclick="toggleMicrophone()" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 text-white flex items-center justify-center transition active:scale-90" title="Mikrofon">
+                    <button id="btn-toggle-mic" onclick="toggleMicrophone()" class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center transition active:scale-90" title="Mikrofon">
                         <i class="fa-solid fa-microphone text-sm"></i>
                     </button>
-                    <button id="btn-toggle-cam" onclick="toggleCamera()" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 text-white flex items-center justify-center transition active:scale-90" title="Kamera">
+                    <button id="btn-toggle-cam" onclick="toggleCamera()" class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center transition active:scale-90" title="Kamera">
                         <i class="fa-solid fa-video text-sm"></i>
                     </button>
                     <button onclick="endCall()" class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center transition shadow-lg shadow-red-600/30 active:scale-90" title="Kapat">
@@ -148,9 +130,8 @@
 
         </div>
 
-        <!-- Right Column: Live Text Chat -->
+        <!-- Sağ Taraf: Canlı Mesajlaşma -->
         <div class="w-full lg:w-80 xl:w-96 bg-gray-900 border border-gray-800 rounded-2xl flex flex-col h-[340px] lg:h-auto shadow-xl">
-            <!-- Chat Header -->
             <div class="p-3 border-b border-gray-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-comments text-indigo-400 text-sm"></i>
@@ -159,15 +140,15 @@
                 <span id="chat-status" class="text-[10px] text-gray-500 font-medium">Bağlı Değil</span>
             </div>
 
-            <!-- Messages Stream Area -->
+            <!-- Mesaj Listesi -->
             <div id="chat-messages" class="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
                 <div class="text-center text-[11px] text-gray-500 my-2">
                     <i class="fa-solid fa-shield-halved mb-1 block text-sm text-gray-600"></i>
-                    Mesajlar doğrudan iletilir, sunucuda saklanmaz.
+                    Mesajlar uçtan uca iletilir, kaydolmaz.
                 </div>
             </div>
 
-            <!-- Message Input Bar -->
+            <!-- Mesaj Girdi Kutusu -->
             <form id="chat-form" onsubmit="sendChatMessage(event)" class="p-2.5 border-t border-gray-800 flex gap-2">
                 <input type="text" id="chat-input" placeholder="Bir mesaj yaz..." disabled
                        class="flex-1 bg-gray-950 border border-gray-700 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-gray-100 placeholder-gray-500 transition outline-none disabled:opacity-50">
@@ -180,7 +161,7 @@
 
     </main>
 
-    <!-- Incoming Call Modal -->
+    <!-- Gelen Arama Penceresi -->
     <div id="incoming-call-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 max-w-xs w-full text-center shadow-2xl">
             <div class="w-14 h-14 rounded-full bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center mx-auto mb-3 text-xl animate-pulse">
@@ -200,10 +181,12 @@
         </div>
     </div>
 
-    <!-- JavaScript Engine -->
+    <!-- JavaScript Mantığı -->
     <script>
         let peer = null;
-        let myId = null;
+        let myUsername = localStorage.getItem('p2p_username') || '';
+        let friends = JSON.parse(localStorage.getItem('p2p_friends') || '[]');
+        
         let activeCall = null;
         let dataConnection = null;
         let localStream = null;
@@ -212,8 +195,8 @@
         let isAudioMuted = false;
         let isVideoOff = false;
 
-        const myPeerIdEl = document.getElementById('my-peer-id');
-        const remotePeerIdInput = document.getElementById('remote-peer-id');
+        const myUsernameEl = document.getElementById('my-username');
+        const friendsListEl = document.getElementById('friends-list');
         const localVideo = document.getElementById('local-video');
         const remoteVideo = document.getElementById('remote-video');
         const localVideoContainer = document.getElementById('local-video-container');
@@ -234,17 +217,36 @@
         const btnToggleCam = document.getElementById('btn-toggle-cam');
 
         window.addEventListener('DOMContentLoaded', () => {
-            initPeer();
+            if (!myUsername) {
+                changeUsername();
+            } else {
+                myUsernameEl.textContent = myUsername;
+                initPeer(myUsername);
+            }
+            renderFriends();
         });
 
-        function initPeer() {
-            const randomId = 'user-' + Math.random().toString(36).substring(2, 8);
-            
-            peer = new Peer(randomId, { debug: 1 });
+        function changeUsername() {
+            let name = prompt("Kendi sabit kullanıcı adını yaz (Örn: arda, ibrahim):", myUsername);
+            if (name) {
+                name = name.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                if (name) {
+                    myUsername = name;
+                    localStorage.setItem('p2p_username', myUsername);
+                    myUsernameEl.textContent = myUsername;
+                    if (peer) peer.destroy();
+                    initPeer(myUsername);
+                }
+            }
+        }
+
+        function initPeer(username) {
+            // Kullanıcı adını doğrudan Peer ID olarak kullanıyoruz
+            peer = new Peer('p2p-user-' + username, { debug: 1 });
 
             peer.on('open', (id) => {
-                myId = id;
-                myPeerIdEl.textContent = id;
+                showStatus('Kullanıcı adın aktif: ' + username, 'success');
+                setTimeout(hideStatus, 2000);
             });
 
             peer.on('connection', (conn) => {
@@ -253,48 +255,69 @@
 
             peer.on('call', (call) => {
                 incomingCallObj = call;
-                incomingCallerIdEl.textContent = call.peer;
+                const callerName = call.peer.replace('p2p-user-', '');
+                incomingCallerIdEl.textContent = callerName;
                 incomingCallModal.classList.remove('hidden');
             });
 
             peer.on('error', (err) => {
-                console.error('PeerJS Hatası:', err);
-                showStatus('Bağlantı hatası: ' + err.type, 'error');
+                if (err.type === 'unavailable-id') {
+                    alert('Bu kullanıcı adı şu an kullanımda! Lütfen başka bir isim seçin.');
+                    changeUsername();
+                } else {
+                    showStatus('Bağlantı hatası: ' + err.type, 'error');
+                }
             });
         }
 
-        function copyMyId() {
-            if (!myId) return;
-            navigator.clipboard.writeText(myId).then(() => {
-                const copyText = document.getElementById('copy-text');
-                copyText.textContent = 'Kopyalandı!';
-                setTimeout(() => { copyText.textContent = 'Kopyala'; }, 2000);
-            }).catch(() => {
-                const tempInput = document.createElement('input');
-                tempInput.value = myId;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-                const copyText = document.getElementById('copy-text');
-                copyText.textContent = 'Kopyalandı!';
-                setTimeout(() => { copyText.textContent = 'Kopyala'; }, 2000);
-            });
+        function promptAddFriend() {
+            let friendName = prompt("Eklemek istediğin arkadaşının kullanıcı adını yaz:");
+            if (friendName) {
+                friendName = friendName.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                if (friendName && !friends.includes(friendName)) {
+                    friends.push(friendName);
+                    localStorage.setItem('p2p_friends', JSON.stringify(friends));
+                    renderFriends();
+                }
+            }
         }
 
-        async function startCall(videoEnabled) {
-            const remoteId = remotePeerIdInput.value.trim();
-            if (!remoteId) {
-                showStatus('Lütfen arkadaşınızın ID\'sini girin.', 'error');
+        function removeFriend(friendName) {
+            friends = friends.filter(f => f !== friendName);
+            localStorage.setItem('p2p_friends', JSON.stringify(friends));
+            renderFriends();
+        }
+
+        function renderFriends() {
+            friendsListEl.innerHTML = '';
+            if (friends.length === 0) {
+                friendsListEl.innerHTML = '<span class="text-xs text-gray-500 italic">Henüz arkadaş eklenmedi. "Ekle" butonuna basıp ekleyebilirsin.</span>';
                 return;
             }
-            if (remoteId === myId) {
-                showStatus('Kendi ID\'nizi arayamazsınız.', 'error');
+
+            friends.forEach(friend => {
+                const badge = document.createElement('div');
+                badge.className = 'flex items-center gap-1.5 bg-gray-800 border border-gray-700/80 rounded-xl px-2.5 py-1.5 text-xs';
+                badge.innerHTML = `
+                    <span class="font-bold text-indigo-300">${escapeHtml(friend)}</span>
+                    <button onclick="startCallWith('${friend}', false)" class="text-indigo-400 hover:text-indigo-300 p-1" title="Sesli Ara"><i class="fa-solid fa-phone"></i></button>
+                    <button onclick="startCallWith('${friend}', true)" class="text-emerald-400 hover:text-emerald-300 p-1" title="Görüntülü Ara"><i class="fa-solid fa-video"></i></button>
+                    <button onclick="removeFriend('${friend}')" class="text-gray-500 hover:text-red-400 p-1 ml-1" title="Sil"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                friendsListEl.appendChild(badge);
+            });
+        }
+
+        async function startCallWith(targetUsername, videoEnabled) {
+            const remotePeerId = 'p2p-user-' + targetUsername;
+
+            if (targetUsername === myUsername) {
+                showStatus('Kendi kendini arayamazsın.', 'error');
                 return;
             }
 
             try {
-                showStatus('Medya cihazlarına erişiliyor...', 'loading');
+                showStatus(targetUsername + ' aranıyor...', 'loading');
                 
                 localStream = await navigator.mediaDevices.getUserMedia({
                     video: videoEnabled ? { facingMode: 'user' } : false,
@@ -304,16 +327,14 @@
                 isVideoOff = !videoEnabled;
                 updateMediaControlsUI();
 
-                const conn = peer.connect(remoteId);
+                const conn = peer.connect(remotePeerId);
                 setupDataConnection(conn);
 
-                showStatus('Arkadaşınız aranıyor...', 'loading');
-                activeCall = peer.call(remoteId, localStream);
+                activeCall = peer.call(remotePeerId, localStream);
                 setupCallEvents(activeCall);
 
             } catch (err) {
-                console.error('Erişim hatası:', err);
-                showStatus('Kamera/mikrofon izni alınamadı.', 'error');
+                showStatus('Kamera/Mikrofon erişimi engellendi.', 'error');
             }
         }
 
@@ -393,7 +414,7 @@
                 chatStatus.className = 'text-[10px] text-emerald-400 font-semibold';
                 chatInput.disabled = false;
                 chatSendBtn.disabled = false;
-                appendSystemNotice('Bağlantı kuruldu. Sohbet edebilirsiniz!');
+                appendSystemNotice('Sohbet başladı!');
             });
 
             dataConnection.on('data', (data) => {
@@ -405,7 +426,7 @@
                 chatStatus.className = 'text-[10px] text-gray-500 font-medium';
                 chatInput.disabled = true;
                 chatSendBtn.disabled = true;
-                appendSystemNotice('Bağlantı sonlandırıldı.');
+                appendSystemNotice('Bağlantı kapandı.');
             });
         }
 
