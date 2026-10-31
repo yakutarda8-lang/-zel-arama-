@@ -161,6 +161,17 @@
 
     </main>
 
+    <!-- Ziyaretçi Sayacı Alanı (Footer) -->
+    <footer class="border-t border-gray-800 bg-gray-900/50 py-3 text-center text-xs text-gray-400 flex flex-col items-center justify-center gap-1">
+        <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-eye text-indigo-400"></i>
+            <span>Siteye Giren Toplam Ziyaretçi:</span>
+            <!-- Canlı Sayaç Görseli -->
+            <img src="https://counter9.optistats.ovh/private/freecounterstat.php?c=w3s9z4l3m2l1x8y7z6a5b4c3d2e1f0g9" border="0" title="ziyaretci sayaci" alt="free counter" style="display:inline-block; vertical-align:middle; filter: invert(1) hue-rotate(180deg);">
+        </div>
+        <p class="text-[10px] text-gray-500">TikTok'tan gelenler buradaki sayacı uçuracak! 🚀</p>
+    </footer>
+
     <!-- Gelen Arama Penceresi -->
     <div id="incoming-call-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 max-w-xs w-full text-center shadow-2xl">
@@ -241,7 +252,6 @@
         }
 
         function initPeer(username) {
-            // Kullanıcı adını doğrudan Peer ID olarak kullanıyoruz
             peer = new Peer('p2p-user-' + username, { debug: 1 });
 
             peer.on('open', (id) => {
