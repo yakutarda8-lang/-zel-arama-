@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Özel P2P Sesli, Görüntülü & Yazılı Görüşme</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PeerJS CDN -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 4px;
+        }
+        .mirror-video {
+            transform: scaleX(-1);
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="border-b border-gray-800 bg-gray-900/90 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-shield-halved text-white text-base"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base leading-tight tracking-wide bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">P2P PrivateCall</h1>
+                    <p class="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Uçtan Uca Şifreli
+                    </p>
+                </div>
+            </div>
+
+            <!-- User Peer ID Box -->
+            <div class="flex items-center bg-gray-800/80 border border-gray-700/60 rounded-xl p-1 pl-2.5">
+                <div class="text-xs mr-2">
+                    <span class="text-gray-400 block text-[9px] uppercase font-semibold">Senin ID'n:</span>
+                    <span id="my-peer-id" class="font-mono text-indigo-300 font-bold text-xs select-all">Yükleniyor...</span>
+                </div>
+                <button id="copy-id-btn" onclick="copyMyId()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1 active:scale-95">
+                    <i class="fa-regular fa-copy"></i>
+                    <span id="copy-text">Kopyala</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl w-full mx-auto p-3 md:p-6 flex-1 flex flex-col lg:flex-row gap-4">
+
+        <!-- Left Column: Video & Call Controls -->
+        <div class="flex-1 flex flex-col gap-3">
+            
+            <!-- Connection Control Panel -->
+            <div id="connection-setup" class="bg-gray-900 border border-gray-800 rounded-2xl p-3.5 shadow-xl">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-plug text-indigo-400"></i> Arkadaşına Bağlan
+                </h2>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-user-tag absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                        <input type="text" id="remote-peer-id" placeholder="Arkadaşının ID'sini yapıştır..." 
+                               class="w-full bg-gray-950 border border-gray-700 focus:border-indigo-500 rounded-xl py-2 pl-9 pr-3 text-xs text-gray-100 placeholder-gray-500 transition outline-none">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="startCall(false)" class="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/20 active:scale-95">
+                            <i class="fa-solid fa-phone"></i> Sesli
+                        </button>
+                        <button onclick="startCall(true)" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-3.5 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 active:scale-95">
+                            <i class="fa-solid fa-video"></i> Görüntülü
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Banner -->
+            <div id="status-banner" class="hidden bg-gray-800/90 border border-indigo-500/30 rounded-xl p-2.5 text-xs flex items-center justify-between">
+                <div class="flex items-center gap-2 text-indigo-300">
+                    <i id="status-icon" class="fa-solid fa-spinner animate-spin"></i>
+                    <span id="status-text">Bağlantı kuruluyor...</span>
+                </div>
+                <button onclick="endCall()" class="text-[11px] bg-red-500/20 text-red-400 hover:bg-red-500/30 px-2 py-0.5 rounded-lg transition font-semibold">İptal</button>
+            </div>
+
+            <!-- Video Call Screen Grid -->
+            <div class="relative flex-1 min-h-[280px] sm:min-h-[360px] bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center">
+                
+                <!-- Placeholder Screen -->
+                <div id="video-placeholder" class="text-center p-4 max-w-xs">
+                    <div class="w-16 h-16 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center mx-auto mb-3 text-gray-500 text-2xl shadow-inner">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-200 mb-1">Henüz Bir Arama Yok</h3>
+                    <p class="text-[11px] text-gray-400">ID'ni arkadaşına ilet veya arkadaşının ID'sini yukarıya girerek aramayı başlat.</p>
+                </div>
+
+                <!-- Remote Main Video -->
+                <video id="remote-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+
+                <!-- Audio Only Avatar Placeholder -->
+                <div id="remote-avatar" class="hidden absolute inset-0 bg-gray-900 flex flex-col items-center justify-center gap-2">
+                    <div class="w-24 h-24 rounded-full bg-indigo-900/40 border-2 border-indigo-500/50 flex items-center justify-center text-indigo-300 text-3xl shadow-xl animate-pulse">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <span class="text-xs text-gray-400 font-medium">Sesli Görüşme Devam Ediyor...</span>
+                </div>
+
+                <!-- Local Small Video (PIP) -->
+                <div id="local-video-container" class="absolute bottom-3 right-3 w-28 sm:w-40 aspect-video bg-gray-950 border-2 border-gray-700 rounded-xl overflow-hidden shadow-xl transition-all hidden">
+                    <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover mirror-video"></video>
+                    <div id="local-video-off-avatar" class="hidden w-full h-full bg-gray-800 flex items-center justify-center text-gray-400 text-lg">
+                        <i class="fa-solid fa-video-slash"></i>
+                    </div>
+                    <span class="absolute bottom-1 left-1.5 text-[9px] bg-black/60 px-1 py-0.5 rounded text-gray-300 font-medium backdrop-blur">Sen</span>
+                </div>
+
+                <!-- Call Action Controls Bar -->
+                <div id="call-controls" class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-gray-950/80 backdrop-blur-md border border-gray-800 rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl hidden z-20">
+                    <button id="btn-toggle-mic" onclick="toggleMicrophone()" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 text-white flex items-center justify-center transition active:scale-90" title="Mikrofon">
+                        <i class="fa-solid fa-microphone text-sm"></i>
+                    </button>
+                    <button id="btn-toggle-cam" onclick="toggleCamera()" class="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 text-white flex items-center justify-center transition active:scale-90" title="Kamera">
+                        <i class="fa-solid fa-video text-sm"></i>
+                    </button>
+                    <button onclick="endCall()" class="w-10 h-10 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center transition shadow-lg shadow-red-600/30 active:scale-90" title="Kapat">
+                        <i class="fa-solid fa-phone-slash text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Live Text Chat -->
+        <div class="w-full lg:w-80 xl:w-96 bg-gray-900 border border-gray-800 rounded-2xl flex flex-col h-[340px] lg:h-auto shadow-xl">
+            <!-- Chat Header -->
+            <div class="p-3 border-b border-gray-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-comments text-indigo-400 text-sm"></i>
+                    <h3 class="font-semibold text-xs text-gray-200">Canlı Mesajlaşma</h3>
+                </div>
+                <span id="chat-status" class="text-[10px] text-gray-500 font-medium">Bağlı Değil</span>
+            </div>
+
+            <!-- Messages Stream Area -->
+            <div id="chat-messages" class="flex-1 p-3 overflow-y-auto space-y-2.5 text-xs">
+                <div class="text-center text-[11px] text-gray-500 my-2">
+                    <i class="fa-solid fa-shield-halved mb-1 block text-sm text-gray-600"></i>
+                    Mesajlar doğrudan iletilir, sunucuda saklanmaz.
+                </div>
+            </div>
+
+            <!-- Message Input Bar -->
+            <form id="chat-form" onsubmit="sendChatMessage(event)" class="p-2.5 border-t border-gray-800 flex gap-2">
+                <input type="text" id="chat-input" placeholder="Bir mesaj yaz..." disabled
+                       class="flex-1 bg-gray-950 border border-gray-700 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-gray-100 placeholder-gray-500 transition outline-none disabled:opacity-50">
+                <button type="submit" id="chat-send-btn" disabled
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-xs font-medium transition flex items-center justify-center disabled:opacity-50 active:scale-95">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+    </main>
+
+    <!-- Incoming Call Modal -->
+    <div id="incoming-call-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 max-w-xs w-full text-center shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center mx-auto mb-3 text-xl animate-pulse">
+                <i class="fa-solid fa-phone-volume"></i>
+            </div>
+            <h3 class="text-base font-bold text-white mb-0.5">Gelen Arama!</h3>
+            <p id="incoming-caller-id" class="text-xs font-mono text-indigo-300 mb-4 truncate px-2">Bilinmeyen Kullanıcı</p>
+            
+            <div class="flex gap-2">
+                <button onclick="rejectCall()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold py-2 rounded-xl text-xs transition">
+                    Reddet
+                </button>
+                <button onclick="acceptCall()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30">
+                    Kabul Et
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Engine -->
+    <script>
+        let peer = null;
+        let myId = null;
+        let activeCall = null;
+        let dataConnection = null;
+        let localStream = null;
+        let incomingCallObj = null;
+
+        let isAudioMuted = false;
+        let isVideoOff = false;
+
+        const myPeerIdEl = document.getElementById('my-peer-id');
+        const remotePeerIdInput = document.getElementById('remote-peer-id');
+        const localVideo = document.getElementById('local-video');
+        const remoteVideo = document.getElementById('remote-video');
+        const localVideoContainer = document.getElementById('local-video-container');
+        const localVideoOffAvatar = document.getElementById('local-video-off-avatar');
+        const videoPlaceholder = document.getElementById('video-placeholder');
+        const remoteAvatar = document.getElementById('remote-avatar');
+        const callControls = document.getElementById('call-controls');
+        const statusBanner = document.getElementById('status-banner');
+        const statusText = document.getElementById('status-text');
+        const statusIcon = document.getElementById('status-icon');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const chatStatus = document.getElementById('chat-status');
+        const incomingCallModal = document.getElementById('incoming-call-modal');
+        const incomingCallerIdEl = document.getElementById('incoming-caller-id');
+        const btnToggleMic = document.getElementById('btn-toggle-mic');
+        const btnToggleCam = document.getElementById('btn-toggle-cam');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initPeer();
+        });
+
+        function initPeer() {
+            const randomId = 'user-' + Math.random().toString(36).substring(2, 8);
+            
+            peer = new Peer(randomId, { debug: 1 });
+
+            peer.on('open', (id) => {
+                myId = id;
+                myPeerIdEl.textContent = id;
+            });
+
+            peer.on('connection', (conn) => {
+                setupDataConnection(conn);
+            });
+
+            peer.on('call', (call) => {
+                incomingCallObj = call;
+                incomingCallerIdEl.textContent = call.peer;
+                incomingCallModal.classList.remove('hidden');
+            });
+
+            peer.on('error', (err) => {
+                console.error('PeerJS Hatası:', err);
+                showStatus('Bağlantı hatası: ' + err.type, 'error');
+            });
+        }
+
+        function copyMyId() {
+            if (!myId) return;
+            navigator.clipboard.writeText(myId).then(() => {
+                const copyText = document.getElementById('copy-text');
+                copyText.textContent = 'Kopyalandı!';
+                setTimeout(() => { copyText.textContent = 'Kopyala'; }, 2000);
+            }).catch(() => {
+                const tempInput = document.createElement('input');
+                tempInput.value = myId;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                const copyText = document.getElementById('copy-text');
+                copyText.textContent = 'Kopyalandı!';
+                setTimeout(() => { copyText.textContent = 'Kopyala'; }, 2000);
+            });
+        }
+
+        async function startCall(videoEnabled) {
+            const remoteId = remotePeerIdInput.value.trim();
+            if (!remoteId) {
+                showStatus('Lütfen arkadaşınızın ID\'sini girin.', 'error');
+                return;
+            }
+            if (remoteId === myId) {
+                showStatus('Kendi ID\'nizi arayamazsınız.', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Medya cihazlarına erişiliyor...', 'loading');
+                
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: videoEnabled ? { facingMode: 'user' } : false,
+                    audio: true
+                });
+
+                isVideoOff = !videoEnabled;
+                updateMediaControlsUI();
+
+                const conn = peer.connect(remoteId);
+                setupDataConnection(conn);
+
+                showStatus('Arkadaşınız aranıyor...', 'loading');
+                activeCall = peer.call(remoteId, localStream);
+                setupCallEvents(activeCall);
+
+            } catch (err) {
+                console.error('Erişim hatası:', err);
+                showStatus('Kamera/mikrofon izni alınamadı.', 'error');
+            }
+        }
+
+        async function acceptCall() {
+            incomingCallModal.classList.add('hidden');
+            if (!incomingCallObj) return;
+
+            try {
+                showStatus('Cihazlara bağlanılıyor...', 'loading');
+                
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user' },
+                    audio: true
+                });
+
+                isVideoOff = false;
+                isAudioMuted = false;
+                updateMediaControlsUI();
+
+                incomingCallObj.answer(localStream);
+                activeCall = incomingCallObj;
+                setupCallEvents(activeCall);
+
+            } catch (err) {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                    isVideoOff = true;
+                    updateMediaControlsUI();
+                    incomingCallObj.answer(localStream);
+                    activeCall = incomingCallObj;
+                    setupCallEvents(activeCall);
+                } catch (audioErr) {
+                    showStatus('Medya erişimi reddedildi.', 'error');
+                }
+            }
+        }
+
+        function rejectCall() {
+            incomingCallModal.classList.add('hidden');
+            if (incomingCallObj) {
+                incomingCallObj.close();
+                incomingCallObj = null;
+            }
+        }
+
+        function setupCallEvents(call) {
+            localVideo.srcObject = localStream;
+            localVideoContainer.classList.remove('hidden');
+            videoPlaceholder.classList.add('hidden');
+            callControls.classList.remove('hidden');
+
+            call.on('stream', (remoteStream) => {
+                showStatus('Görüşme Bağlandı', 'success');
+                remoteVideo.srcObject = remoteStream;
+                
+                const hasVideo = remoteStream.getVideoTracks().length > 0 && remoteStream.getVideoTracks()[0].enabled;
+                if (hasVideo) {
+                    remoteVideo.classList.remove('hidden');
+                    remoteAvatar.classList.add('hidden');
+                } else {
+                    remoteVideo.classList.add('hidden');
+                    remoteAvatar.classList.remove('hidden');
+                }
+
+                setTimeout(() => hideStatus(), 3000);
+            });
+
+            call.on('close', () => endCall());
+            call.on('error', () => endCall());
+        }
+
+        function setupDataConnection(conn) {
+            dataConnection = conn;
+
+            dataConnection.on('open', () => {
+                chatStatus.textContent = 'Bağlandı';
+                chatStatus.className = 'text-[10px] text-emerald-400 font-semibold';
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+                appendSystemNotice('Bağlantı kuruldu. Sohbet edebilirsiniz!');
+            });
+
+            dataConnection.on('data', (data) => {
+                appendMessage(data.text, 'remote', data.time);
+            });
+
+            dataConnection.on('close', () => {
+                chatStatus.textContent = 'Bağlantı Kesildi';
+                chatStatus.className = 'text-[10px] text-gray-500 font-medium';
+                chatInput.disabled = true;
+                chatSendBtn.disabled = true;
+                appendSystemNotice('Bağlantı sonlandırıldı.');
+            });
+        }
+
+        function sendChatMessage(e) {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (!text || !dataConnection) return;
+
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            dataConnection.send({ text: text, time: timeStr });
+            appendMessage(text, 'local', timeStr);
+            chatInput.value = '';
+        }
+
+        function appendMessage(text, sender, time) {
+            const timeStr = time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const msgDiv = document.createElement('div');
+            msgDiv.className = sender === 'local' ? 'flex justify-end' : 'flex justify-start';
+
+            const bubble = document.createElement('div');
+            bubble.className = sender === 'local'
+                ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-none px-3 py-1.5 max-w-[85%] break-words shadow'
+                : 'bg-gray-800 text-gray-200 border border-gray-700/60 rounded-2xl rounded-tl-none px-3 py-1.5 max-w-[85%] break-words shadow';
+            
+            bubble.innerHTML = `<div>${escapeHtml(text)}</div><div class="text-[9px] opacity-70 text-right mt-0.5">${timeStr}</div>`;
+            msgDiv.appendChild(bubble);
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function appendSystemNotice(notice) {
+            const noticeDiv = document.createElement('div');
+            noticeDiv.className = 'text-center text-[10px] text-indigo-400 bg-indigo-950/40 border border-indigo-800/40 py-1 px-2 rounded-lg my-1';
+            noticeDiv.textContent = notice;
+            chatMessages.appendChild(noticeDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function toggleMicrophone() {
+            if (!localStream) return;
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                isAudioMuted = !isAudioMuted;
+                audioTrack.enabled = !isAudioMuted;
+                updateMediaControlsUI();
+            }
+        }
+
+        function toggleCamera() {
+            if (!localStream) return;
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack) {
+                isVideoOff = !isVideoOff;
+                videoTrack.enabled = !isVideoOff;
+                updateMediaControlsUI();
+            }
+        }
+
+        function updateMediaControlsUI() {
+            if (isAudioMuted) {
+                btnToggleMic.className = 'w-10 h-10 rounded-full bg-red-600/80 text-white flex items-center justify-center transition active:scale-90';
+                btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone-slash text-sm"></i>';
+            } else {
+                btnToggleMic.className = 'w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center transition active:scale-90';
+                btnToggleMic.innerHTML = '<i class="fa-solid fa-microphone text-sm"></i>';
+            }
+
+            if (isVideoOff) {
+                btnToggleCam.className = 'w-10 h-10 rounded-full bg-red-600/80 text-white flex items-center justify-center transition active:scale-90';
+                btnToggleCam.innerHTML = '<i class="fa-solid fa-video-slash text-sm"></i>';
+                localVideo.classList.add('hidden');
+                localVideoOffAvatar.classList.remove('hidden');
+            } else {
+                btnToggleCam.className = 'w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center transition active:scale-90';
+                btnToggleCam.innerHTML = '<i class="fa-solid fa-video text-sm"></i>';
+                localVideo.classList.remove('hidden');
+                localVideoOffAvatar.classList.add('hidden');
+            }
+        }
+
+        function endCall() {
+            if (activeCall) { activeCall.close(); activeCall = null; }
+            if (dataConnection) { dataConnection.close(); dataConnection = null; }
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+
+            remoteVideo.srcObject = null;
+            localVideo.srcObject = null;
+            remoteVideo.classList.add('hidden');
+            remoteAvatar.classList.add('hidden');
+            localVideoContainer.classList.add('hidden');
+            callControls.classList.add('hidden');
+            videoPlaceholder.classList.remove('hidden');
+            
+            chatStatus.textContent = 'Bağlantı Kapandı';
+            chatStatus.className = 'text-[10px] text-gray-500 font-medium';
+            chatInput.disabled = true;
+            chatSendBtn.disabled = true;
+
+            hideStatus();
+        }
+
+        function showStatus(message, type) {
+            statusBanner.classList.remove('hidden');
+            statusText.textContent = message;
+
+            if (type === 'loading') {
+                statusIcon.className = 'fa-solid fa-spinner animate-spin text-indigo-400';
+            } else if (type === 'error') {
+                statusIcon.className = 'fa-solid fa-triangle-exclamation text-red-400';
+            } else if (type === 'success') {
+                statusIcon.className = 'fa-solid fa-circle-check text-emerald-400';
+            }
+        }
+
+        function hideStatus() {
+            statusBanner.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
